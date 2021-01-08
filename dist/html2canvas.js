@@ -423,7 +423,7 @@ exports.parseBoundCurves = exports.calculatePaddingBoxPath = exports.calculateBo
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _Vector = __webpack_require__(5);
+var _Vector = __webpack_require__(7);
 
 var _Vector2 = _interopRequireDefault(_Vector);
 
@@ -674,7 +674,7 @@ var _Size = __webpack_require__(31);
 
 var _Size2 = _interopRequireDefault(_Size);
 
-var _Vector = __webpack_require__(5);
+var _Vector = __webpack_require__(7);
 
 var _Vector2 = _interopRequireDefault(_Vector);
 
@@ -1019,39 +1019,6 @@ var parseBackgroundImage = exports.parseBackgroundImage = function parseBackgrou
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-
-var _Path = __webpack_require__(6);
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var Vector = function Vector(x, y) {
-    _classCallCheck(this, Vector);
-
-    this.type = _Path.PATH.VECTOR;
-    this.x = x;
-    this.y = y;
-    if (true) {
-        if (isNaN(x)) {
-            console.error('Invalid x value given for Vector');
-        }
-        if (isNaN(y)) {
-            console.error('Invalid y value given for Vector');
-        }
-    }
-};
-
-exports.default = Vector;
-
-/***/ }),
-/* 6 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
 var PATH = exports.PATH = {
     VECTOR: 0,
     BEZIER_CURVE: 1,
@@ -1059,7 +1026,7 @@ var PATH = exports.PATH = {
 };
 
 /***/ }),
-/* 7 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1303,6 +1270,39 @@ var getImage = function getImage(node, resourceLoader) {
 
     return null;
 };
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _Path = __webpack_require__(5);
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Vector = function Vector(x, y) {
+    _classCallCheck(this, Vector);
+
+    this.type = _Path.PATH.VECTOR;
+    this.x = x;
+    this.y = y;
+    if (true) {
+        if (isNaN(x)) {
+            console.error('Invalid x value given for Vector');
+        }
+        if (isNaN(y)) {
+            console.error('Invalid y value given for Vector');
+        }
+    }
+};
+
+exports.default = Vector;
 
 /***/ }),
 /* 8 */
@@ -1884,8 +1884,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var BORDER_STYLE = exports.BORDER_STYLE = {
     NONE: 0,
-    SOLID: 1,
-    DASHED: 2
+    SOLID: 1
 };
 
 var BORDER_SIDES = exports.BORDER_SIDES = {
@@ -1903,8 +1902,6 @@ var parseBorderStyle = function parseBorderStyle(style) {
     switch (style) {
         case 'none':
             return BORDER_STYLE.NONE;
-        case 'dashed':
-            return BORDER_STYLE.DASHED;
     }
     return BORDER_STYLE.SOLID;
 };
@@ -2057,7 +2054,7 @@ exports.createCounterText = exports.inlineListItemElement = exports.getListOwner
 
 var _Util = __webpack_require__(3);
 
-var _NodeContainer = __webpack_require__(7);
+var _NodeContainer = __webpack_require__(6);
 
 var _NodeContainer2 = _interopRequireDefault(_NodeContainer);
 
@@ -2379,7 +2376,7 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _Path = __webpack_require__(6);
+var _Path = __webpack_require__(5);
 
 var _textDecoration = __webpack_require__(11);
 
@@ -2836,7 +2833,7 @@ var _Circle = __webpack_require__(50);
 
 var _Circle2 = _interopRequireDefault(_Circle);
 
-var _Vector = __webpack_require__(5);
+var _Vector = __webpack_require__(7);
 
 var _Vector2 = _interopRequireDefault(_Vector);
 
@@ -3566,7 +3563,7 @@ var _StackingContext = __webpack_require__(30);
 
 var _StackingContext2 = _interopRequireDefault(_StackingContext);
 
-var _NodeContainer = __webpack_require__(7);
+var _NodeContainer = __webpack_require__(6);
 
 var _NodeContainer2 = _interopRequireDefault(_NodeContainer);
 
@@ -3692,7 +3689,7 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _NodeContainer = __webpack_require__(7);
+var _NodeContainer = __webpack_require__(6);
 
 var _NodeContainer2 = _interopRequireDefault(_NodeContainer);
 
@@ -3765,9 +3762,9 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _Path = __webpack_require__(6);
+var _Path = __webpack_require__(5);
 
-var _Vector = __webpack_require__(5);
+var _Vector = __webpack_require__(7);
 
 var _Vector2 = _interopRequireDefault(_Vector);
 
@@ -5219,7 +5216,7 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-var _Path = __webpack_require__(6);
+var _Path = __webpack_require__(5);
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -5273,10 +5270,6 @@ var _TextContainer2 = _interopRequireDefault(_TextContainer);
 var _background = __webpack_require__(4);
 
 var _border = __webpack_require__(12);
-
-var _Vector = __webpack_require__(5);
-
-var _Vector2 = _interopRequireDefault(_Vector);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -5430,24 +5423,7 @@ var Renderer = function () {
     }, {
         key: 'renderBorder',
         value: function renderBorder(border, side, curvePoints) {
-            var path = (0, _Bounds.parsePathForBorder)(curvePoints, side);
-            if (border.borderStyle === _border.BORDER_STYLE.DASHED) {
-                var p1 = void 0,
-                    p2 = void 0;
-                var lineWidth = border.borderWidth;
-                if (side == _border.BORDER_SIDES.TOP || side == _border.BORDER_SIDES.BOTTOM) {
-                    p1 = new _Vector2.default(path[0].x, (path[0].y + path[3].y) / 2);
-                    p2 = new _Vector2.default(path[1].x, p1.y);
-                } else {
-                    p1 = new _Vector2.default((path[0].x + path[1].x) / 2, path[0].y);
-                    p2 = new _Vector2.default(p1.x, path[2].y);
-                };
-                this.target.path([p1, p2]);
-                this.target.ctx.setLineDash([lineWidth, lineWidth * 3 / 2]);
-                this.target.ctx.strokeStyle = border.borderColor.toString();
-                this.target.ctx.lineWidth = lineWidth;
-                this.target.ctx.stroke();
-            } else this.target.drawShape(path, border.borderColor);
+            this.target.drawShape((0, _Bounds.parsePathForBorder)(curvePoints, side), border.borderColor);
         }
     }, {
         key: 'renderStack',
@@ -5614,7 +5590,7 @@ exports.transformWebkitRadialGradientArgs = exports.parseGradient = exports.Radi
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
-var _NodeContainer = __webpack_require__(7);
+var _NodeContainer = __webpack_require__(6);
 
 var _NodeContainer2 = _interopRequireDefault(_NodeContainer);
 
