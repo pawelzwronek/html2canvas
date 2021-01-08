@@ -1,4 +1,5 @@
 /dist/npm
+/dist/lib
 /tmp
 /build
 /nbproject/
@@ -17,3 +18,5 @@ debug.log
 tests/reftests.js
 *.log
 .rpt2_cache
+__tests__
+__mocks__
