@@ -741,9 +741,13 @@ export class CanvasRenderer {
                     await this.renderDottedBorder(border.color, side++, paint.curves);
                 } else if (border.style === BORDER_STYLE.DOUBLE) {
                     await this.renderDoubleBorder(border.color, side++, paint.curves);
-                } else {
+                } else if (border.style === BORDER_STYLE.SOLID){
                     await this.renderSolidBorder(border.color, side++, paint.curves);
+                } else {
+                    side++
                 }
+            } else {
+                side++
             }
         }
     }
@@ -783,7 +787,7 @@ export class CanvasRenderer {
         this.ctx.beginPath();
         this.ctx.strokeStyle = asString(color);
         const dash = data.space;
-        this.ctx.lineDashOffset = 1.2 * dash;
+        // this.ctx.lineDashOffset = 1.2 * dash;
         this.ctx.setLineDash([dash * 2, dash]);
         paths.forEach((point, index) => {
             const start: Vector = isBezierCurve(point) ? point.start : point;
