@@ -77,7 +77,6 @@ const createContainer = (element: Element): ElementContainer => {
     if (isIFrameElement(element)) {
         return new IFrameElementContainer(element);
     }
-
     return new ElementContainer(element);
 };
 
