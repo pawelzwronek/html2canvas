@@ -1,7 +1,6 @@
 import {Path} from './path';
 import {BoundCurves} from './bound-curves';
 import {isBezierCurve} from './bezier-curve';
-import {Vector} from './vector';
 
 export const parsePathForBorder = (curves: BoundCurves, borderSide: number): Path[] => {
     switch (borderSide) {
@@ -37,37 +36,103 @@ export const parsePathForBorder = (curves: BoundCurves, borderSide: number): Pat
     }
 };
 
-export const parseWidthForDashedAndDottedBorder = (paths: any[], borderSide: number): any => {
-    const topLeft: Vector = isBezierCurve(paths[0]) ? paths[0].start : paths[0];
-    const topRight: Vector = isBezierCurve(paths[1]) ? paths[1].start : paths[1];
-    const bottomRight: Vector = isBezierCurve(paths[2]) ? paths[2].start : paths[2];
-    const bottomLeft: Vector = isBezierCurve(paths[3]) ? paths[3].start : paths[3];
+export const parsePathForBorderDoubleOuter = (curves: BoundCurves, borderSide: number): Path[] => {
     switch (borderSide) {
         case 0:
-            return {
-                width: topRight['x'] - topLeft['x'],
-                space: bottomRight['y'] - topRight['y'],
-                startPos: topLeft
-            };
+            return createPathFromCurves(
+                curves.topLeftBorderBox,
+                curves.topLeftBorderDoubleOuterBox,
+                curves.topRightBorderBox,
+                curves.topRightBorderDoubleOuterBox
+            );
         case 1:
-            return {
-                width: topRight['y'] - topLeft['y'],
-                space: topRight['x'] - bottomRight['x'],
-                startPos: topLeft
-            };
+            return createPathFromCurves(
+                curves.topRightBorderBox,
+                curves.topRightBorderDoubleOuterBox,
+                curves.bottomRightBorderBox,
+                curves.bottomRightBorderDoubleOuterBox
+            );
         case 2:
-            return {
-                width: topLeft['x'] - topRight['x'],
-                space: topRight['y'] - bottomLeft['y'],
-                startPos: topLeft
-            };
+            return createPathFromCurves(
+                curves.bottomRightBorderBox,
+                curves.bottomRightBorderDoubleOuterBox,
+                curves.bottomLeftBorderBox,
+                curves.bottomLeftBorderDoubleOuterBox
+            );
         case 3:
-            return {
-                width: topLeft['y'] - topRight['y'],
-                space: bottomLeft['x'] - topRight['x'],
-                startPos: topLeft
-            };
+        default:
+            return createPathFromCurves(
+                curves.bottomLeftBorderBox,
+                curves.bottomLeftBorderDoubleOuterBox,
+                curves.topLeftBorderBox,
+                curves.topLeftBorderDoubleOuterBox
+            );
     }
+};
+
+export const parsePathForBorderDoubleInner = (curves: BoundCurves, borderSide: number): Path[] => {
+    switch (borderSide) {
+        case 0:
+            return createPathFromCurves(
+                curves.topLeftBorderDoubleInnerBox,
+                curves.topLeftPaddingBox,
+                curves.topRightBorderDoubleInnerBox,
+                curves.topRightPaddingBox
+            );
+        case 1:
+            return createPathFromCurves(
+                curves.topRightBorderDoubleInnerBox,
+                curves.topRightPaddingBox,
+                curves.bottomRightBorderDoubleInnerBox,
+                curves.bottomRightPaddingBox
+            );
+        case 2:
+            return createPathFromCurves(
+                curves.bottomRightBorderDoubleInnerBox,
+                curves.bottomRightPaddingBox,
+                curves.bottomLeftBorderDoubleInnerBox,
+                curves.bottomLeftPaddingBox
+            );
+        case 3:
+        default:
+            return createPathFromCurves(
+                curves.bottomLeftBorderDoubleInnerBox,
+                curves.bottomLeftPaddingBox,
+                curves.topLeftBorderDoubleInnerBox,
+                curves.topLeftPaddingBox
+            );
+    }
+};
+
+export const parsePathForBorderStroke = (curves: BoundCurves, borderSide: number): Path[] => {
+    switch (borderSide) {
+        case 0:
+            return createStrokePathFromCurves(curves.topLeftBorderStroke, curves.topRightBorderStroke);
+        case 1:
+            return createStrokePathFromCurves(curves.topRightBorderStroke, curves.bottomRightBorderStroke);
+        case 2:
+            return createStrokePathFromCurves(curves.bottomRightBorderStroke, curves.bottomLeftBorderStroke);
+        case 3:
+        default:
+            return createStrokePathFromCurves(curves.bottomLeftBorderStroke, curves.topLeftBorderStroke);
+    }
+};
+
+const createStrokePathFromCurves = (outer1: Path, outer2: Path): Path[] => {
+    const path = [];
+    if (isBezierCurve(outer1)) {
+        path.push(outer1.subdivide(0.5, false));
+    } else {
+        path.push(outer1);
+    }
+
+    if (isBezierCurve(outer2)) {
+        path.push(outer2.subdivide(0.5, true));
+    } else {
+        path.push(outer2);
+    }
+
+    return path;
 };
 
 export const renderDottedLine = (

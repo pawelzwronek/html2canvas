@@ -1,6 +1,7 @@
 import { ElementPaint, StackingContext } from '../stacking-context';
 import { Color } from '../../css/types/color';
 import { ElementContainer } from '../../dom/element-container';
+import { BORDER_STYLE } from '../../css/property-descriptors/border-style';
 import { CSSParsedDeclaration } from '../../css/index';
 import { TextContainer } from '../../dom/text-container';
 import { Path } from '../path';
@@ -38,7 +39,7 @@ export declare class CanvasRenderer {
     popEffect(): void;
     renderStack(stack: StackingContext): Promise<void>;
     renderNode(paint: ElementPaint): Promise<void>;
-    renderTextWithLetterSpacing(text: TextBounds, letterSpacing: number, lineHeight?: number): void;
+    renderTextWithLetterSpacing(text: TextBounds, letterSpacing: number, baseline: number): void;
     private createFontStyle;
     renderTextNode(text: TextContainer, styles: CSSParsedDeclaration): Promise<void>;
     renderReplacedElement(container: ReplacedElementContainer, curves: BoundCurves, image: HTMLImageElement | HTMLCanvasElement): void;
@@ -51,9 +52,8 @@ export declare class CanvasRenderer {
     resizeImage(image: HTMLImageElement, width: number, height: number): HTMLCanvasElement | HTMLImageElement;
     renderBackgroundImage(container: ElementContainer): Promise<void>;
     renderSolidBorder(color: Color, side: number, curvePoints: BoundCurves): Promise<void>;
-    renderDoubleBorder(color: Color, side: number, curvePoints: BoundCurves): Promise<void>;
+    renderDoubleBorder(color: Color, width: number, side: number, curvePoints: BoundCurves): Promise<void>;
     renderNodeBackgroundAndBorders(paint: ElementPaint): Promise<void>;
-    renderDottedBorder(color: Color, side: number, curvePoints: BoundCurves): Promise<void>;
-    renderDashedBorder(color: Color, side: number, curvePoints: BoundCurves): Promise<void>;
+    renderDashedDottedBorder(color: Color, width: number, side: number, curvePoints: BoundCurves, style: BORDER_STYLE): Promise<void>;
     render(element: ElementContainer): Promise<HTMLCanvasElement>;
 }

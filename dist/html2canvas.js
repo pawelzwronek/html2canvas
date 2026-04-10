@@ -1,6 +1,6 @@
 /*!
  * html2canvas 1.0.0-rc.7 <https://html2canvas.hertzen.com>
- * Copyright (c) 2021 Niklas von Hertzen <https://hertzen.com>
+ * Copyright (c) 2026 Niklas von Hertzen <https://hertzen.com>
  * Released under MIT License
  */
 (function (global, factory) {
@@ -4041,6 +4041,63 @@
         }
     };
 
+    var PAINT_ORDER_LAYER;
+    (function (PAINT_ORDER_LAYER) {
+        PAINT_ORDER_LAYER[PAINT_ORDER_LAYER["FILL"] = 0] = "FILL";
+        PAINT_ORDER_LAYER[PAINT_ORDER_LAYER["STROKE"] = 1] = "STROKE";
+        PAINT_ORDER_LAYER[PAINT_ORDER_LAYER["MARKERS"] = 2] = "MARKERS";
+    })(PAINT_ORDER_LAYER || (PAINT_ORDER_LAYER = {}));
+    var paintOrder = {
+        name: 'paint-order',
+        initialValue: 'normal',
+        prefix: false,
+        type: PropertyDescriptorParsingType.LIST,
+        parse: function (tokens) {
+            var DEFAULT_VALUE = [PAINT_ORDER_LAYER.FILL, PAINT_ORDER_LAYER.STROKE, PAINT_ORDER_LAYER.MARKERS];
+            var layers = [];
+            tokens.filter(isIdentToken).forEach(function (token) {
+                switch (token.value) {
+                    case 'stroke':
+                        layers.push(PAINT_ORDER_LAYER.STROKE);
+                        break;
+                    case 'fill':
+                        layers.push(PAINT_ORDER_LAYER.FILL);
+                        break;
+                    case 'markers':
+                        layers.push(PAINT_ORDER_LAYER.MARKERS);
+                        break;
+                }
+            });
+            DEFAULT_VALUE.forEach(function (value) {
+                if (layers.indexOf(value) === -1) {
+                    layers.push(value);
+                }
+            });
+            return layers;
+        }
+    };
+
+    var webkitTextStrokeColor = {
+        name: "-webkit-text-stroke-color",
+        initialValue: 'currentcolor',
+        prefix: false,
+        type: PropertyDescriptorParsingType.TYPE_VALUE,
+        format: 'color'
+    };
+
+    var webkitTextStrokeWidth = {
+        name: "-webkit-text-stroke-width",
+        initialValue: '0',
+        type: PropertyDescriptorParsingType.VALUE,
+        prefix: false,
+        parse: function (token) {
+            if (isDimensionToken(token)) {
+                return token.number;
+            }
+            return 0;
+        }
+    };
+
     var CSSParsedDeclaration = /** @class */ (function () {
         function CSSParsedDeclaration(declaration) {
             this.backgroundClip = parse(backgroundClip, declaration.backgroundClip);
@@ -4094,6 +4151,7 @@
             this.paddingRight = parse(paddingRight, declaration.paddingRight);
             this.paddingBottom = parse(paddingBottom, declaration.paddingBottom);
             this.paddingLeft = parse(paddingLeft, declaration.paddingLeft);
+            this.paintOrder = parse(paintOrder, declaration.paintOrder);
             this.position = parse(position, declaration.position);
             this.textAlign = parse(textAlign, declaration.textAlign);
             this.textDecorationColor = parse(textDecorationColor, declaration.textDecorationColor || declaration.color);
@@ -4103,6 +4161,8 @@
             this.transform = parse(transform, declaration.transform);
             this.transformOrigin = parse(transformOrigin, declaration.transformOrigin);
             this.visibility = parse(visibility, declaration.visibility);
+            this.webkitTextStrokeColor = parse(webkitTextStrokeColor, declaration.webkitTextStrokeColor);
+            this.webkitTextStrokeWidth = parse(webkitTextStrokeWidth, declaration.webkitTextStrokeWidth);
             this.wordBreak = parse(wordBreak, declaration.wordBreak);
             this.zIndex = parse(zIndex, declaration.zIndex);
         }
@@ -5588,6 +5648,54 @@
             var paddingRight = getAbsoluteValue(styles.paddingRight, element.bounds.width);
             var paddingBottom = getAbsoluteValue(styles.paddingBottom, element.bounds.width);
             var paddingLeft = getAbsoluteValue(styles.paddingLeft, element.bounds.width);
+            this.topLeftBorderDoubleOuterBox =
+                tlh > 0 || tlv > 0
+                    ? getCurvePoints(bounds.left + borderLeftWidth / 3, bounds.top + borderTopWidth / 3, tlh - borderLeftWidth / 3, tlv - borderTopWidth / 3, CORNER.TOP_LEFT)
+                    : new Vector(bounds.left + borderLeftWidth / 3, bounds.top + borderTopWidth / 3);
+            this.topRightBorderDoubleOuterBox =
+                tlh > 0 || tlv > 0
+                    ? getCurvePoints(bounds.left + topWidth, bounds.top + borderTopWidth / 3, trh - borderRightWidth / 3, trv - borderTopWidth / 3, CORNER.TOP_RIGHT)
+                    : new Vector(bounds.left + bounds.width - borderRightWidth / 3, bounds.top + borderTopWidth / 3);
+            this.bottomRightBorderDoubleOuterBox =
+                brh > 0 || brv > 0
+                    ? getCurvePoints(bounds.left + bottomWidth, bounds.top + rightHeight, brh - borderRightWidth / 3, brv - borderBottomWidth / 3, CORNER.BOTTOM_RIGHT)
+                    : new Vector(bounds.left + bounds.width - borderRightWidth / 3, bounds.top + bounds.height - borderBottomWidth / 3);
+            this.bottomLeftBorderDoubleOuterBox =
+                blh > 0 || blv > 0
+                    ? getCurvePoints(bounds.left + borderLeftWidth / 3, bounds.top + leftHeight, blh - borderLeftWidth / 3, blv - borderBottomWidth / 3, CORNER.BOTTOM_LEFT)
+                    : new Vector(bounds.left + borderLeftWidth / 3, bounds.top + bounds.height - borderBottomWidth / 3);
+            this.topLeftBorderDoubleInnerBox =
+                tlh > 0 || tlv > 0
+                    ? getCurvePoints(bounds.left + (borderLeftWidth * 2) / 3, bounds.top + (borderTopWidth * 2) / 3, tlh - (borderLeftWidth * 2) / 3, tlv - (borderTopWidth * 2) / 3, CORNER.TOP_LEFT)
+                    : new Vector(bounds.left + (borderLeftWidth * 2) / 3, bounds.top + (borderTopWidth * 2) / 3);
+            this.topRightBorderDoubleInnerBox =
+                tlh > 0 || tlv > 0
+                    ? getCurvePoints(bounds.left + topWidth, bounds.top + (borderTopWidth * 2) / 3, trh - (borderRightWidth * 2) / 3, trv - (borderTopWidth * 2) / 3, CORNER.TOP_RIGHT)
+                    : new Vector(bounds.left + bounds.width - (borderRightWidth * 2) / 3, bounds.top + (borderTopWidth * 2) / 3);
+            this.bottomRightBorderDoubleInnerBox =
+                brh > 0 || brv > 0
+                    ? getCurvePoints(bounds.left + bottomWidth, bounds.top + rightHeight, brh - (borderRightWidth * 2) / 3, brv - (borderBottomWidth * 2) / 3, CORNER.BOTTOM_RIGHT)
+                    : new Vector(bounds.left + bounds.width - (borderRightWidth * 2) / 3, bounds.top + bounds.height - (borderBottomWidth * 2) / 3);
+            this.bottomLeftBorderDoubleInnerBox =
+                blh > 0 || blv > 0
+                    ? getCurvePoints(bounds.left + (borderLeftWidth * 2) / 3, bounds.top + leftHeight, blh - (borderLeftWidth * 2) / 3, blv - (borderBottomWidth * 2) / 3, CORNER.BOTTOM_LEFT)
+                    : new Vector(bounds.left + (borderLeftWidth * 2) / 3, bounds.top + bounds.height - (borderBottomWidth * 2) / 3);
+            this.topLeftBorderStroke =
+                tlh > 0 || tlv > 0
+                    ? getCurvePoints(bounds.left + borderLeftWidth / 2, bounds.top + borderTopWidth / 2, tlh - borderLeftWidth / 2, tlv - borderTopWidth / 2, CORNER.TOP_LEFT)
+                    : new Vector(bounds.left + borderLeftWidth / 2, bounds.top + borderTopWidth / 2);
+            this.topRightBorderStroke =
+                tlh > 0 || tlv > 0
+                    ? getCurvePoints(bounds.left + topWidth, bounds.top + borderTopWidth / 2, trh - borderRightWidth / 2, trv - borderTopWidth / 2, CORNER.TOP_RIGHT)
+                    : new Vector(bounds.left + bounds.width - borderRightWidth / 2, bounds.top + borderTopWidth / 2);
+            this.bottomRightBorderStroke =
+                brh > 0 || brv > 0
+                    ? getCurvePoints(bounds.left + bottomWidth, bounds.top + rightHeight, brh - borderRightWidth / 2, brv - borderBottomWidth / 2, CORNER.BOTTOM_RIGHT)
+                    : new Vector(bounds.left + bounds.width - borderRightWidth / 2, bounds.top + bounds.height - borderBottomWidth / 2);
+            this.bottomLeftBorderStroke =
+                blh > 0 || blv > 0
+                    ? getCurvePoints(bounds.left + borderLeftWidth / 2, bounds.top + leftHeight, blh - borderLeftWidth / 2, blv - borderBottomWidth / 2, CORNER.BOTTOM_LEFT)
+                    : new Vector(bounds.left + borderLeftWidth / 2, bounds.top + bounds.height - borderBottomWidth / 2);
             this.topLeftBorderBox =
                 tlh > 0 || tlv > 0
                     ? getCurvePoints(bounds.left, bounds.top, tlh, tlv, CORNER.TOP_LEFT)
@@ -5610,15 +5718,15 @@
                     : new Vector(bounds.left + borderLeftWidth, bounds.top + borderTopWidth);
             this.topRightPaddingBox =
                 trh > 0 || trv > 0
-                    ? getCurvePoints(bounds.left + Math.min(topWidth, bounds.width + borderLeftWidth), bounds.top + borderTopWidth, topWidth > bounds.width + borderLeftWidth ? 0 : trh - borderLeftWidth, trv - borderTopWidth, CORNER.TOP_RIGHT)
+                    ? getCurvePoints(bounds.left + Math.min(topWidth, bounds.width - borderRightWidth), bounds.top + borderTopWidth, topWidth > bounds.width + borderRightWidth ? 0 : Math.max(0, trh - borderRightWidth), Math.max(0, trv - borderTopWidth), CORNER.TOP_RIGHT)
                     : new Vector(bounds.left + bounds.width - borderRightWidth, bounds.top + borderTopWidth);
             this.bottomRightPaddingBox =
                 brh > 0 || brv > 0
-                    ? getCurvePoints(bounds.left + Math.min(bottomWidth, bounds.width - borderLeftWidth), bounds.top + Math.min(rightHeight, bounds.height + borderTopWidth), Math.max(0, brh - borderRightWidth), brv - borderBottomWidth, CORNER.BOTTOM_RIGHT)
+                    ? getCurvePoints(bounds.left + Math.min(bottomWidth, bounds.width - borderLeftWidth), bounds.top + Math.min(rightHeight, bounds.height - borderBottomWidth), Math.max(0, brh - borderRightWidth), Math.max(0, brv - borderBottomWidth), CORNER.BOTTOM_RIGHT)
                     : new Vector(bounds.left + bounds.width - borderRightWidth, bounds.top + bounds.height - borderBottomWidth);
             this.bottomLeftPaddingBox =
                 blh > 0 || blv > 0
-                    ? getCurvePoints(bounds.left + borderLeftWidth, bounds.top + leftHeight, Math.max(0, blh - borderLeftWidth), blv - borderBottomWidth, CORNER.BOTTOM_LEFT)
+                    ? getCurvePoints(bounds.left + borderLeftWidth, bounds.top + Math.min(leftHeight, bounds.height - borderBottomWidth), Math.max(0, blh - borderLeftWidth), Math.max(0, blv - borderBottomWidth), CORNER.BOTTOM_LEFT)
                     : new Vector(bounds.left + borderLeftWidth, bounds.top + bounds.height - borderBottomWidth);
             this.topLeftContentBox =
                 tlh > 0 || tlv > 0
@@ -5874,68 +5982,60 @@
                 return createPathFromCurves(curves.bottomLeftBorderBox, curves.bottomLeftPaddingBox, curves.topLeftBorderBox, curves.topLeftPaddingBox);
         }
     };
-    var parseWidthForDashedAndDottedBorder = function (paths, borderSide) {
-        var topLeft = isBezierCurve(paths[0]) ? paths[0].start : paths[0];
-        var topRight = isBezierCurve(paths[1]) ? paths[1].start : paths[1];
-        var bottomRight = isBezierCurve(paths[2]) ? paths[2].start : paths[2];
-        var bottomLeft = isBezierCurve(paths[3]) ? paths[3].start : paths[3];
+    var parsePathForBorderDoubleOuter = function (curves, borderSide) {
         switch (borderSide) {
             case 0:
-                return {
-                    width: topRight['x'] - topLeft['x'],
-                    space: bottomRight['y'] - topRight['y'],
-                    startPos: topLeft
-                };
+                return createPathFromCurves(curves.topLeftBorderBox, curves.topLeftBorderDoubleOuterBox, curves.topRightBorderBox, curves.topRightBorderDoubleOuterBox);
             case 1:
-                return {
-                    width: topRight['y'] - topLeft['y'],
-                    space: topRight['x'] - bottomRight['x'],
-                    startPos: topLeft
-                };
+                return createPathFromCurves(curves.topRightBorderBox, curves.topRightBorderDoubleOuterBox, curves.bottomRightBorderBox, curves.bottomRightBorderDoubleOuterBox);
             case 2:
-                return {
-                    width: topLeft['x'] - topRight['x'],
-                    space: topRight['y'] - bottomLeft['y'],
-                    startPos: topLeft
-                };
+                return createPathFromCurves(curves.bottomRightBorderBox, curves.bottomRightBorderDoubleOuterBox, curves.bottomLeftBorderBox, curves.bottomLeftBorderDoubleOuterBox);
             case 3:
-                return {
-                    width: topLeft['y'] - topRight['y'],
-                    space: bottomLeft['x'] - topRight['x'],
-                    startPos: topLeft
-                };
+            default:
+                return createPathFromCurves(curves.bottomLeftBorderBox, curves.bottomLeftBorderDoubleOuterBox, curves.topLeftBorderBox, curves.topLeftBorderDoubleOuterBox);
         }
     };
-    var renderDottedLine = function (x1, y1, x2, y2, interval, context, color, offset) {
-        if (!interval) {
-            interval = 5;
+    var parsePathForBorderDoubleInner = function (curves, borderSide) {
+        switch (borderSide) {
+            case 0:
+                return createPathFromCurves(curves.topLeftBorderDoubleInnerBox, curves.topLeftPaddingBox, curves.topRightBorderDoubleInnerBox, curves.topRightPaddingBox);
+            case 1:
+                return createPathFromCurves(curves.topRightBorderDoubleInnerBox, curves.topRightPaddingBox, curves.bottomRightBorderDoubleInnerBox, curves.bottomRightPaddingBox);
+            case 2:
+                return createPathFromCurves(curves.bottomRightBorderDoubleInnerBox, curves.bottomRightPaddingBox, curves.bottomLeftBorderDoubleInnerBox, curves.bottomLeftPaddingBox);
+            case 3:
+            default:
+                return createPathFromCurves(curves.bottomLeftBorderDoubleInnerBox, curves.bottomLeftPaddingBox, curves.topLeftBorderDoubleInnerBox, curves.topLeftPaddingBox);
         }
-        var isHorizontal = true;
-        if (x1 == x2) {
-            isHorizontal = false;
+    };
+    var parsePathForBorderStroke = function (curves, borderSide) {
+        switch (borderSide) {
+            case 0:
+                return createStrokePathFromCurves(curves.topLeftBorderStroke, curves.topRightBorderStroke);
+            case 1:
+                return createStrokePathFromCurves(curves.topRightBorderStroke, curves.bottomRightBorderStroke);
+            case 2:
+                return createStrokePathFromCurves(curves.bottomRightBorderStroke, curves.bottomLeftBorderStroke);
+            case 3:
+            default:
+                return createStrokePathFromCurves(curves.bottomLeftBorderStroke, curves.topLeftBorderStroke);
         }
-        var len = isHorizontal ? x2 - x1 : y2 - y1;
-        context.moveTo(x1, y1);
-        context.fillStyle = color;
-        var progress = 0;
-        var r = Math.abs(interval) / 2;
-        while (Math.abs(len) > Math.abs(progress)) {
-            if (isHorizontal) {
-                context.beginPath();
-                context.moveTo(x1 + progress + offset, y1 + offset);
-                context.arc(x1 + progress + offset, y1 + offset, r, 0, Math.PI * 2, true);
-                context.fill();
-                context.closePath();
-            }
-            else {
-                context.beginPath();
-                context.moveTo(x1 + offset, y1 + progress + offset);
-                context.arc(x1 + offset, y1 + progress - offset, r, 0, Math.PI * 2, true);
-                context.fill();
-                context.closePath();
-            }
-            progress += interval * 2;
+    };
+    var createStrokePathFromCurves = function (outer1, outer2) {
+        var path = [];
+        if (isBezierCurve(outer1)) {
+            path.push(outer1.subdivide(0.5, false));
         }
+        else {
+            path.push(outer1);
+        }
+        if (isBezierCurve(outer2)) {
+            path.push(outer2.subdivide(0.5, true));
+        }
+        else {
+            path.push(outer2);
+        }
+        return path;
     };
     var createPathFromCurves = function (outer1, inner1, outer2, inner2) {
         var path = [];
@@ -6201,77 +6301,6 @@
         return FontMetrics;
     }());
 
-    function layout(chars, width, measure) {
-        var pos = [];
-        var line = 0;
-        var lineString = '';
-        var lineLen = 0;
-        for (var i = 0; i < chars.length; i++) {
-            if (chars[i] === '\n') {
-                pos.push([-1, line]);
-                line++;
-                setLine(0, 0);
-            }
-            else {
-                addChar(i);
-                var lineWidth = measure(lineString, lineLen);
-                pos.push([lineWidth - measure(chars[i], 1), line]);
-                if (lineWidth > width) {
-                    if (chars[i] === ' ') {
-                        var p = i;
-                        while (p > 0 && pos[p][1] === line && chars[p] === ' ')
-                            p--;
-                        for (var j = i; j > p; j--) {
-                            pos[j][0] = -1;
-                        }
-                        line++;
-                        setLine(0, 0);
-                        while (i < chars.length + 1 && chars[i + 1] === ' ') {
-                            pos.push([-1, line]);
-                            i++;
-                        }
-                    }
-                    else if (chars[i] === '-') {
-                        line++;
-                        setLine(i, i + 1);
-                        pos[i] = [0, line];
-                    }
-                    else {
-                        var p = i;
-                        while (p > 0 && pos[p][1] === line && chars[p] !== ' ' && chars[p] !== '-')
-                            p--;
-                        line++;
-                        if (chars[p] === ' ' || chars[p] === '-') {
-                            setLine(p + 1, i + 1);
-                            for (var j = i; j > p; j--) {
-                                pos[j] = [pos[j][0] - pos[p + 1][0], line];
-                            }
-                            if (chars[p] === ' ') {
-                                pos[p][0] = -1;
-                            }
-                        }
-                        else {
-                            setLine(i, i + 1);
-                            pos[i] = [0, line];
-                        }
-                    }
-                }
-            }
-        }
-        return pos;
-        function addChar(pos) {
-            lineString += chars[pos];
-            lineLen++;
-        }
-        function setLine(from, to) {
-            lineString = '';
-            for (var i = from; i < to; i++) {
-                lineString += chars[i];
-            }
-            lineLen = to - from;
-        }
-    }
-
     var MASK_OFFSET = 10000;
     var CanvasRenderer = /** @class */ (function () {
         function CanvasRenderer(options) {
@@ -6327,7 +6356,6 @@
                         case 0:
                             styles = stack.element.container.styles;
                             if (!styles.isVisible()) return [3 /*break*/, 2];
-                            this.ctx.globalAlpha = styles.opacity;
                             return [4 /*yield*/, this.renderStackContent(stack)];
                         case 1:
                             _a.sent();
@@ -6355,23 +6383,17 @@
                 });
             });
         };
-        CanvasRenderer.prototype.renderTextWithLetterSpacing = function (text, letterSpacing, lineHeight) {
+        CanvasRenderer.prototype.renderTextWithLetterSpacing = function (text, letterSpacing, baseline) {
             var _this = this;
-            if (lineHeight === undefined) {
-                this.ctx.fillText(text.text, text.bounds.left, text.bounds.top + text.bounds.height);
+            if (letterSpacing === 0) {
+                this.ctx.fillText(text.text, text.bounds.left, text.bounds.top + baseline);
             }
             else {
-                var chars = toCodePoints(text.text).map(function (i) { return fromCodePoint(i); });
-                var pos = layout(chars, text.bounds.width, function (s, len) {
-                    return _this.ctx.measureText(s).width + letterSpacing * (len - 1);
-                });
-                var dx = text.bounds.left;
-                var dy = text.bounds.top + lineHeight / 2;
-                for (var i = 0; i < pos.length; i++) {
-                    if (pos[i][0] >= 0) {
-                        this.ctx.fillText(chars[i], pos[i][0] + dx, pos[i][1] * lineHeight + dy);
-                    }
-                }
+                var letters = toCodePoints(text.text).map(function (i) { return fromCodePoint(i); });
+                letters.reduce(function (left, letter) {
+                    _this.ctx.fillText(letter, left, text.bounds.top + baseline);
+                    return left + _this.ctx.measureText(letter).width;
+                }, text.bounds.left);
             }
         };
         CanvasRenderer.prototype.createFontStyle = function (styles) {
@@ -6390,53 +6412,68 @@
         };
         CanvasRenderer.prototype.renderTextNode = function (text, styles) {
             return __awaiter(this, void 0, void 0, function () {
-                var _a, font, fontFamily, fontSize;
+                var _a, font, fontFamily, fontSize, middle, paintOrder;
                 var _this = this;
                 return __generator(this, function (_b) {
                     _a = this.createFontStyle(styles), font = _a[0], fontFamily = _a[1], fontSize = _a[2];
                     this.ctx.font = font;
+                    this.ctx.textBaseline = 'bottom';
+                    middle = this.fontMetrics.getMetrics(fontFamily, fontSize).middle;
+                    paintOrder = styles.paintOrder;
                     text.textBounds.forEach(function (text) {
-                        _this.ctx.fillStyle = asString(styles.color);
-                        _this.renderTextWithLetterSpacing(text, styles.letterSpacing);
-                        var textShadows = styles.textShadow;
-                        if (textShadows.length && text.text.trim().length) {
-                            textShadows
-                                .slice(0)
-                                .reverse()
-                                .forEach(function (textShadow) {
-                                _this.ctx.shadowColor = asString(textShadow.color);
-                                _this.ctx.shadowOffsetX = textShadow.offsetX.number * _this.options.scale;
-                                _this.ctx.shadowOffsetY = textShadow.offsetY.number * _this.options.scale;
-                                _this.ctx.shadowBlur = textShadow.blur.number;
-                                _this.ctx.fillText(text.text, text.bounds.left, text.bounds.top + text.bounds.height);
-                            });
-                            _this.ctx.shadowColor = '';
-                            _this.ctx.shadowOffsetX = 0;
-                            _this.ctx.shadowOffsetY = 0;
-                            _this.ctx.shadowBlur = 0;
-                        }
-                        if (styles.textDecorationLine.length) {
-                            _this.ctx.fillStyle = asString(styles.textDecorationColor || styles.color);
-                            styles.textDecorationLine.forEach(function (textDecorationLine) {
-                                switch (textDecorationLine) {
-                                    case 1 /* UNDERLINE */:
-                                        // Draws a line at the baseline of the font
-                                        // TODO As some browsers display the line as more than 1px if the font-size is big,
-                                        // need to take that into account both in position and size
-                                        var baseline = _this.fontMetrics.getMetrics(fontFamily, fontSize).baseline;
-                                        _this.ctx.fillRect(text.bounds.left, Math.round(text.bounds.top + baseline), text.bounds.width, 1);
-                                        break;
-                                    case 2 /* OVERLINE */:
-                                        _this.ctx.fillRect(text.bounds.left, Math.round(text.bounds.top), text.bounds.width, 1);
-                                        break;
-                                    case 3 /* LINE_THROUGH */:
-                                        // TODO try and find exact position for line-through
-                                        var middle = _this.fontMetrics.getMetrics(fontFamily, fontSize).middle;
-                                        _this.ctx.fillRect(text.bounds.left, Math.ceil(text.bounds.top + middle), text.bounds.width, 1);
-                                        break;
-                                }
-                            });
-                        }
+                        paintOrder.forEach(function (paintOrderLayer) {
+                            switch (paintOrderLayer) {
+                                case PAINT_ORDER_LAYER.FILL:
+                                    _this.ctx.fillStyle = asString(styles.color);
+                                    _this.renderTextWithLetterSpacing(text, styles.letterSpacing, text.bounds.height);
+                                    var textShadows = styles.textShadow;
+                                    if (textShadows.length && text.text.trim().length) {
+                                        textShadows
+                                            .slice(0)
+                                            .reverse()
+                                            .forEach(function (textShadow) {
+                                            _this.ctx.shadowColor = asString(textShadow.color);
+                                            _this.ctx.shadowOffsetX = textShadow.offsetX.number * _this.options.scale;
+                                            _this.ctx.shadowOffsetY = textShadow.offsetY.number * _this.options.scale;
+                                            _this.ctx.shadowBlur = textShadow.blur.number;
+                                            _this.renderTextWithLetterSpacing(text, styles.letterSpacing, text.bounds.height);
+                                        });
+                                        _this.ctx.shadowColor = '';
+                                        _this.ctx.shadowOffsetX = 0;
+                                        _this.ctx.shadowOffsetY = 0;
+                                        _this.ctx.shadowBlur = 0;
+                                    }
+                                    if (styles.textDecorationLine.length) {
+                                        _this.ctx.fillStyle = asString(styles.textDecorationColor || styles.color);
+                                        styles.textDecorationLine.forEach(function (textDecorationLine) {
+                                            switch (textDecorationLine) {
+                                                case 1 /* UNDERLINE */:
+                                                    var baseline = _this.fontMetrics.getMetrics(fontFamily, fontSize).baseline;
+                                                    _this.ctx.fillRect(text.bounds.left, Math.round(text.bounds.top + baseline), text.bounds.width, 1);
+                                                    break;
+                                                case 2 /* OVERLINE */:
+                                                    _this.ctx.fillRect(text.bounds.left, Math.round(text.bounds.top), text.bounds.width, 1);
+                                                    break;
+                                                case 3 /* LINE_THROUGH */:
+                                                    _this.ctx.fillRect(text.bounds.left, Math.ceil(text.bounds.top + middle), text.bounds.width, 1);
+                                                    break;
+                                            }
+                                        });
+                                    }
+                                    break;
+                                case PAINT_ORDER_LAYER.STROKE:
+                                    if (styles.webkitTextStrokeWidth && text.text.trim().length) {
+                                        _this.ctx.strokeStyle = asString(styles.webkitTextStrokeColor);
+                                        _this.ctx.lineWidth = styles.webkitTextStrokeWidth;
+                                        _this.ctx.lineJoin = !!window.chrome ? 'miter' : 'round';
+                                        _this.ctx.strokeText(text.text, text.bounds.left, text.bounds.top + text.bounds.height);
+                                    }
+                                    _this.ctx.strokeStyle = '';
+                                    _this.ctx.lineWidth = 0;
+                                    _this.ctx.lineJoin = 'miter';
+                                    break;
+                            }
+                        });
                     });
                     return [2 /*return*/];
                 });
@@ -6455,38 +6492,38 @@
         };
         CanvasRenderer.prototype.renderNodeContent = function (paint) {
             return __awaiter(this, void 0, void 0, function () {
-                var container, curves, styles, _i, _a, child, image, e_1, image, e_2, iframeRenderer, canvas, size, bounds, x, textBounds, lineHeight, img, image, url, e_3, bounds;
-                return __generator(this, function (_b) {
-                    switch (_b.label) {
+                var container, curves, styles, _i, _a, child, image, e_1, image, e_2, iframeRenderer, canvas, size, _b, fontFamily, fontSize, baseline, bounds, x, textBounds, img, image, url, e_3, fontFamily, bounds;
+                return __generator(this, function (_c) {
+                    switch (_c.label) {
                         case 0:
                             this.applyEffects(paint.effects, 4 /* CONTENT */);
                             container = paint.container;
                             curves = paint.curves;
                             styles = container.styles;
                             _i = 0, _a = container.textNodes;
-                            _b.label = 1;
+                            _c.label = 1;
                         case 1:
                             if (!(_i < _a.length)) return [3 /*break*/, 4];
                             child = _a[_i];
                             return [4 /*yield*/, this.renderTextNode(child, styles)];
                         case 2:
-                            _b.sent();
-                            _b.label = 3;
+                            _c.sent();
+                            _c.label = 3;
                         case 3:
                             _i++;
                             return [3 /*break*/, 1];
                         case 4:
                             if (!(container instanceof ImageElementContainer)) return [3 /*break*/, 8];
-                            _b.label = 5;
+                            _c.label = 5;
                         case 5:
-                            _b.trys.push([5, 7, , 8]);
+                            _c.trys.push([5, 7, , 8]);
                             return [4 /*yield*/, this.options.cache.match(container.src)];
                         case 6:
-                            image = _b.sent();
+                            image = _c.sent();
                             this.renderReplacedElement(container, curves, image);
                             return [3 /*break*/, 8];
                         case 7:
-                            e_1 = _b.sent();
+                            e_1 = _c.sent();
                             Logger.getInstance(this.options.id).error("Error loading image " + container.src);
                             return [3 /*break*/, 8];
                         case 8:
@@ -6494,16 +6531,16 @@
                                 this.renderReplacedElement(container, curves, container.canvas);
                             }
                             if (!(container instanceof SVGElementContainer)) return [3 /*break*/, 12];
-                            _b.label = 9;
+                            _c.label = 9;
                         case 9:
-                            _b.trys.push([9, 11, , 12]);
+                            _c.trys.push([9, 11, , 12]);
                             return [4 /*yield*/, this.options.cache.match(container.svg)];
                         case 10:
-                            image = _b.sent();
+                            image = _c.sent();
                             this.renderReplacedElement(container, curves, image);
                             return [3 /*break*/, 12];
                         case 11:
-                            e_2 = _b.sent();
+                            e_2 = _c.sent();
                             Logger.getInstance(this.options.id).error("Error loading svg " + container.svg.substring(0, 255));
                             return [3 /*break*/, 12];
                         case 12:
@@ -6524,11 +6561,11 @@
                             });
                             return [4 /*yield*/, iframeRenderer.render(container.tree)];
                         case 13:
-                            canvas = _b.sent();
+                            canvas = _c.sent();
                             if (container.width && container.height) {
                                 this.ctx.drawImage(canvas, 0, 0, container.width, container.height, container.bounds.left, container.bounds.top, container.bounds.width, container.bounds.height);
                             }
-                            _b.label = 14;
+                            _c.label = 14;
                         case 14:
                             if (container instanceof InputElementContainer) {
                                 size = Math.min(container.bounds.width, container.bounds.height);
@@ -6561,9 +6598,11 @@
                                 }
                             }
                             if (isTextInputElement(container) && container.value.length) {
-                                this.ctx.font = this.createFontStyle(styles)[0];
+                                _b = this.createFontStyle(styles), fontFamily = _b[0], fontSize = _b[1];
+                                baseline = this.fontMetrics.getMetrics(fontFamily, fontSize).baseline;
+                                this.ctx.font = fontFamily;
                                 this.ctx.fillStyle = asString(styles.color);
-                                this.ctx.textBaseline = 'middle';
+                                this.ctx.textBaseline = 'alphabetic';
                                 this.ctx.textAlign = canvasTextAlign(container.styles.textAlign);
                                 bounds = contentBox(container);
                                 x = 0;
@@ -6584,10 +6623,9 @@
                                     new Vector(bounds.left, bounds.top + bounds.height)
                                 ]);
                                 this.ctx.clip();
-                                lineHeight = (container instanceof TextareaElementContainer) ? computeLineHeight(styles.lineHeight, styles.fontSize.number) : undefined;
-                                this.renderTextWithLetterSpacing(new TextBounds(container.value, textBounds), styles.letterSpacing, lineHeight);
+                                this.renderTextWithLetterSpacing(new TextBounds(container.value, textBounds), styles.letterSpacing, baseline + 1);
                                 this.ctx.restore();
-                                this.ctx.textBaseline = 'bottom';
+                                this.ctx.textBaseline = 'alphabetic';
                                 this.ctx.textAlign = 'left';
                             }
                             if (!contains(container.styles.display, 2048 /* LIST_ITEM */)) return [3 /*break*/, 20];
@@ -6596,31 +6634,32 @@
                             if (!(img.type === CSSImageType.URL)) return [3 /*break*/, 18];
                             image = void 0;
                             url = img.url;
-                            _b.label = 15;
+                            _c.label = 15;
                         case 15:
-                            _b.trys.push([15, 17, , 18]);
+                            _c.trys.push([15, 17, , 18]);
                             return [4 /*yield*/, this.options.cache.match(url)];
                         case 16:
-                            image = _b.sent();
+                            image = _c.sent();
                             this.ctx.drawImage(image, container.bounds.left - (image.width + 10), container.bounds.top);
                             return [3 /*break*/, 18];
                         case 17:
-                            e_3 = _b.sent();
+                            e_3 = _c.sent();
                             Logger.getInstance(this.options.id).error("Error loading list-style-image " + url);
                             return [3 /*break*/, 18];
                         case 18: return [3 /*break*/, 20];
                         case 19:
                             if (paint.listValue && container.styles.listStyleType !== LIST_STYLE_TYPE.NONE) {
-                                this.ctx.font = this.createFontStyle(styles)[0];
+                                fontFamily = this.createFontStyle(styles)[0];
+                                this.ctx.font = fontFamily;
                                 this.ctx.fillStyle = asString(styles.color);
                                 this.ctx.textBaseline = 'middle';
                                 this.ctx.textAlign = 'right';
                                 bounds = new Bounds(container.bounds.left, container.bounds.top + getAbsoluteValue(container.styles.paddingTop, container.bounds.width), container.bounds.width, computeLineHeight(styles.lineHeight, styles.fontSize.number) / 2 + 1);
-                                this.renderTextWithLetterSpacing(new TextBounds(paint.listValue, bounds), styles.letterSpacing);
+                                this.renderTextWithLetterSpacing(new TextBounds(paint.listValue, bounds), styles.letterSpacing, computeLineHeight(styles.lineHeight, styles.fontSize.number) / 2 + 2);
                                 this.ctx.textBaseline = 'bottom';
                                 this.ctx.textAlign = 'left';
                             }
-                            _b.label = 20;
+                            _c.label = 20;
                         case 20: return [2 /*return*/];
                     }
                 });
@@ -6780,9 +6819,10 @@
             if (image.width === width && image.height === height) {
                 return image;
             }
-            var canvas = this.canvas.ownerDocument.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
+            var ownerDocument = this.canvas.ownerDocument || document;
+            var canvas = ownerDocument.createElement('canvas');
+            canvas.width = Math.max(1, width);
+            canvas.height = Math.max(1, height);
             var ctx = canvas.getContext('2d');
             ctx.drawImage(image, 0, 0, image.width, image.height, 0, 0, width, height);
             return canvas;
@@ -6912,32 +6952,27 @@
                 });
             });
         };
-        CanvasRenderer.prototype.renderDoubleBorder = function (color, side, curvePoints) {
+        CanvasRenderer.prototype.renderDoubleBorder = function (color, width, side, curvePoints) {
             return __awaiter(this, void 0, void 0, function () {
-                var paths, data, cur;
-                var _this = this;
+                var outerPaths, innerPaths;
                 return __generator(this, function (_a) {
-                    paths = parsePathForBorder(curvePoints, side);
-                    data = parseWidthForDashedAndDottedBorder(paths, side);
-                    paths.forEach(function (point, index) {
-                        var start = isBezierCurve(point) ? point.start : point;
-                        _this.ctx.beginPath();
-                        _this.ctx.lineWidth = data.space / 3;
-                        if (index === 2) {
-                            _this.ctx.strokeStyle = 'rgba(0, 0, 0, 0)';
-                        }
-                        else {
-                            _this.ctx.strokeStyle = asString(color);
-                        }
-                        if (cur) {
-                            _this.ctx.lineTo(cur.x, cur.y);
-                        }
-                        _this.ctx.lineTo(start.x, start.y);
-                        _this.ctx.stroke();
-                        _this.ctx.closePath();
-                        cur = isBezierCurve(point) ? point.start : point;
-                    });
-                    return [2 /*return*/];
+                    switch (_a.label) {
+                        case 0:
+                            if (!(width < 3)) return [3 /*break*/, 2];
+                            return [4 /*yield*/, this.renderSolidBorder(color, side, curvePoints)];
+                        case 1:
+                            _a.sent();
+                            return [2 /*return*/];
+                        case 2:
+                            outerPaths = parsePathForBorderDoubleOuter(curvePoints, side);
+                            this.path(outerPaths);
+                            this.ctx.fillStyle = asString(color);
+                            this.ctx.fill();
+                            innerPaths = parsePathForBorderDoubleInner(curvePoints, side);
+                            this.path(innerPaths);
+                            this.ctx.fill();
+                            return [2 /*return*/];
+                    }
                 });
             });
         };
@@ -6952,10 +6987,10 @@
                             styles = paint.container.styles;
                             hasBackground = !isTransparent(styles.backgroundColor) || styles.backgroundImage.length;
                             borders = [
-                                { style: styles.borderTopStyle, color: styles.borderTopColor },
-                                { style: styles.borderRightStyle, color: styles.borderRightColor },
-                                { style: styles.borderBottomStyle, color: styles.borderBottomColor },
-                                { style: styles.borderLeftStyle, color: styles.borderLeftColor }
+                                { style: styles.borderTopStyle, color: styles.borderTopColor, width: styles.borderTopWidth },
+                                { style: styles.borderRightStyle, color: styles.borderRightColor, width: styles.borderRightWidth },
+                                { style: styles.borderBottomStyle, color: styles.borderBottomColor, width: styles.borderBottomWidth },
+                                { style: styles.borderLeftStyle, color: styles.borderLeftColor, width: styles.borderLeftWidth }
                             ];
                             backgroundPaintingArea = calculateBackgroundCurvedPaintingArea(getBackgroundValueForIndex(styles.backgroundClip, 0), paint.curves);
                             if (!(hasBackground || styles.boxShadow.length)) return [3 /*break*/, 2];
@@ -7002,108 +7037,141 @@
                             _i = 0, borders_1 = borders;
                             _a.label = 3;
                         case 3:
-                            if (!(_i < borders_1.length)) return [3 /*break*/, 15];
+                            if (!(_i < borders_1.length)) return [3 /*break*/, 13];
                             border = borders_1[_i];
-                            if (!(border.style !== BORDER_STYLE.NONE && !isTransparent(border.color))) return [3 /*break*/, 13];
+                            if (!(border.style !== BORDER_STYLE.NONE && !isTransparent(border.color) && border.width > 0)) return [3 /*break*/, 11];
                             if (!(border.style === BORDER_STYLE.DASHED)) return [3 /*break*/, 5];
-                            return [4 /*yield*/, this.renderDashedBorder(border.color, side++, paint.curves)];
+                            return [4 /*yield*/, this.renderDashedDottedBorder(border.color, border.width, side, paint.curves, BORDER_STYLE.DASHED)];
                         case 4:
                             _a.sent();
-                            return [3 /*break*/, 12];
+                            return [3 /*break*/, 11];
                         case 5:
                             if (!(border.style === BORDER_STYLE.DOTTED)) return [3 /*break*/, 7];
-                            return [4 /*yield*/, this.renderDottedBorder(border.color, side++, paint.curves)];
+                            return [4 /*yield*/, this.renderDashedDottedBorder(border.color, border.width, side, paint.curves, BORDER_STYLE.DOTTED)];
                         case 6:
                             _a.sent();
-                            return [3 /*break*/, 12];
+                            return [3 /*break*/, 11];
                         case 7:
                             if (!(border.style === BORDER_STYLE.DOUBLE)) return [3 /*break*/, 9];
-                            return [4 /*yield*/, this.renderDoubleBorder(border.color, side++, paint.curves)];
+                            return [4 /*yield*/, this.renderDoubleBorder(border.color, border.width, side, paint.curves)];
                         case 8:
                             _a.sent();
-                            return [3 /*break*/, 12];
-                        case 9:
-                            if (!(border.style === BORDER_STYLE.SOLID)) return [3 /*break*/, 11];
-                            return [4 /*yield*/, this.renderSolidBorder(border.color, side++, paint.curves)];
+                            return [3 /*break*/, 11];
+                        case 9: return [4 /*yield*/, this.renderSolidBorder(border.color, side, paint.curves)];
                         case 10:
                             _a.sent();
-                            return [3 /*break*/, 12];
+                            _a.label = 11;
                         case 11:
                             side++;
                             _a.label = 12;
-                        case 12: return [3 /*break*/, 14];
-                        case 13:
-                            side++;
-                            _a.label = 14;
-                        case 14:
+                        case 12:
                             _i++;
                             return [3 /*break*/, 3];
-                        case 15: return [2 /*return*/];
+                        case 13: return [2 /*return*/];
                     }
                 });
             });
         };
-        CanvasRenderer.prototype.renderDottedBorder = function (color, side, curvePoints) {
+        CanvasRenderer.prototype.renderDashedDottedBorder = function (color, width, side, curvePoints, style) {
             return __awaiter(this, void 0, void 0, function () {
-                var paths, data, x1, y1, x2, y2, interval, offset;
+                var strokePaths, boxPaths, startX, startY, endX, endY, length, dashLength, spaceLength, useLineDash, multiplier, numberOfDashes, minSpace, maxSpace, path1, path2, path1, path2;
                 return __generator(this, function (_a) {
-                    paths = parsePathForBorder(curvePoints, side);
-                    data = parseWidthForDashedAndDottedBorder(paths, side);
-                    x1 = data['startPos']['x'];
-                    y1 = data['startPos']['y'];
-                    interval = side > 1 ? -data['space'] : data['space'];
-                    offset = 0;
-                    if (side === 0) {
-                        y2 = y1;
-                        x2 = x1 + data['width'];
-                        offset = interval / 2;
+                    this.ctx.save();
+                    strokePaths = parsePathForBorderStroke(curvePoints, side);
+                    boxPaths = parsePathForBorder(curvePoints, side);
+                    if (style === BORDER_STYLE.DASHED) {
+                        this.path(boxPaths);
+                        this.ctx.clip();
                     }
-                    else if (side === 1) {
-                        x2 = x1;
-                        y2 = y1 + data['width'];
-                        offset = -interval / 2;
+                    if (isBezierCurve(boxPaths[0])) {
+                        startX = boxPaths[0].start.x;
+                        startY = boxPaths[0].start.y;
                     }
-                    else if (side === 2) {
-                        y2 = y1;
-                        x2 = x1 - data['width'];
-                        offset = interval / 2;
+                    else {
+                        startX = boxPaths[0].x;
+                        startY = boxPaths[0].y;
                     }
-                    else if (side === 3) {
-                        x2 = x1;
-                        y2 = y1 - data['width'];
-                        offset = -interval / 2;
+                    if (isBezierCurve(boxPaths[1])) {
+                        endX = boxPaths[1].end.x;
+                        endY = boxPaths[1].end.y;
                     }
-                    renderDottedLine(x1, y1, x2, y2, interval, this.ctx, asString(color), offset);
-                    return [2 /*return*/];
-                });
-            });
-        };
-        CanvasRenderer.prototype.renderDashedBorder = function (color, side, curvePoints) {
-            return __awaiter(this, void 0, void 0, function () {
-                var paths, data, dash;
-                var _this = this;
-                return __generator(this, function (_a) {
-                    paths = parsePathForBorder(curvePoints, side);
-                    data = parseWidthForDashedAndDottedBorder(paths, side);
+                    else {
+                        endX = boxPaths[1].x;
+                        endY = boxPaths[1].y;
+                    }
+                    if (side === 0 || side === 2) {
+                        length = Math.abs(startX - endX);
+                    }
+                    else {
+                        length = Math.abs(startY - endY);
+                    }
                     this.ctx.beginPath();
+                    if (style === BORDER_STYLE.DOTTED) {
+                        this.formatPath(strokePaths);
+                    }
+                    else {
+                        this.formatPath(boxPaths.slice(0, 2));
+                    }
+                    dashLength = width < 3 ? width * 3 : width * 2;
+                    spaceLength = width < 3 ? width * 2 : width;
+                    if (style === BORDER_STYLE.DOTTED) {
+                        dashLength = width;
+                        spaceLength = width;
+                    }
+                    useLineDash = true;
+                    if (length <= dashLength * 2) {
+                        useLineDash = false;
+                    }
+                    else if (length <= dashLength * 2 + spaceLength) {
+                        multiplier = length / (2 * dashLength + spaceLength);
+                        dashLength *= multiplier;
+                        spaceLength *= multiplier;
+                    }
+                    else {
+                        numberOfDashes = Math.floor((length + spaceLength) / (dashLength + spaceLength));
+                        minSpace = (length - numberOfDashes * dashLength) / (numberOfDashes - 1);
+                        maxSpace = (length - (numberOfDashes + 1) * dashLength) / numberOfDashes;
+                        spaceLength =
+                            maxSpace <= 0 || Math.abs(spaceLength - minSpace) < Math.abs(spaceLength - maxSpace)
+                                ? minSpace
+                                : maxSpace;
+                    }
+                    if (useLineDash) {
+                        if (style === BORDER_STYLE.DOTTED) {
+                            this.ctx.setLineDash([0, dashLength + spaceLength]);
+                        }
+                        else {
+                            this.ctx.setLineDash([dashLength, spaceLength]);
+                        }
+                    }
+                    if (style === BORDER_STYLE.DOTTED) {
+                        this.ctx.lineCap = 'round';
+                        this.ctx.lineWidth = width;
+                    }
+                    else {
+                        this.ctx.lineWidth = width * 2 + 1.1;
+                    }
                     this.ctx.strokeStyle = asString(color);
-                    dash = data.space;
-                    // this.ctx.lineDashOffset = 1.2 * dash;
-                    this.ctx.setLineDash([dash * 2, dash]);
-                    paths.forEach(function (point, index) {
-                        var start = isBezierCurve(point) ? point.start : point;
-                        if (index === 0) {
-                            _this.ctx.moveTo(start.x, start.y);
-                        }
-                        else if (index === 1) {
-                            _this.ctx.lineTo(start.x, start.y);
-                        }
-                    });
-                    this.ctx.lineWidth = dash;
                     this.ctx.stroke();
                     this.ctx.setLineDash([]);
+                    // dashed round edge gap
+                    if (style === BORDER_STYLE.DASHED) {
+                        if (isBezierCurve(boxPaths[0])) {
+                            path1 = boxPaths[3];
+                            path2 = boxPaths[0];
+                            this.ctx.beginPath();
+                            this.formatPath([new Vector(path1.end.x, path1.end.y), new Vector(path2.start.x, path2.start.y)]);
+                            this.ctx.stroke();
+                        }
+                        if (isBezierCurve(boxPaths[1])) {
+                            path1 = boxPaths[1];
+                            path2 = boxPaths[2];
+                            this.ctx.beginPath();
+                            this.formatPath([new Vector(path1.end.x, path1.end.y), new Vector(path2.start.x, path2.start.y)]);
+                            this.ctx.stroke();
+                        }
+                    }
                     this.ctx.restore();
-                    this.ctx.closePath();
                     return [2 /*return*/];
                 });
             });
