@@ -39,7 +39,7 @@ export declare class CanvasRenderer {
     popEffect(): void;
     renderStack(stack: StackingContext): Promise<void>;
     renderNode(paint: ElementPaint): Promise<void>;
-    renderTextWithLetterSpacing(text: TextBounds, letterSpacing: number, baseline: number): void;
+    renderTextWithLetterSpacing(text: TextBounds, letterSpacing: number, lineHeight?: number): void;
     private createFontStyle;
     renderTextNode(text: TextContainer, styles: CSSParsedDeclaration): Promise<void>;
     renderReplacedElement(container: ReplacedElementContainer, curves: BoundCurves, image: HTMLImageElement | HTMLCanvasElement): void;

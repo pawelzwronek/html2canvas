@@ -43,6 +43,7 @@ import {TextareaElementContainer} from '../../dom/elements/textarea-element-cont
 import {SelectElementContainer} from '../../dom/elements/select-element-container';
 import {IFrameElementContainer} from '../../dom/replaced-elements/iframe-element-container';
 import {TextShadow} from '../../css/property-descriptors/text-shadow';
+import {layout} from './textarea-layout';
 import {PAINT_ORDER_LAYER} from '../../css/property-descriptors/paint-order';
 
 export type RenderConfigurations = RenderOptions & {
@@ -147,16 +148,20 @@ export class CanvasRenderer {
         }
     }
 
-    renderTextWithLetterSpacing(text: TextBounds, letterSpacing: number, baseline: number): void {
-        if (letterSpacing === 0) {
-            this.ctx.fillText(text.text, text.bounds.left, text.bounds.top + baseline);
+    renderTextWithLetterSpacing(text: TextBounds, letterSpacing: number, lineHeight?: number) {
+        if (lineHeight === undefined) {
+            this.ctx.fillText(text.text, text.bounds.left, text.bounds.top + text.bounds.height);
         } else {
-            const letters = toCodePoints(text.text).map((i) => fromCodePoint(i));
-            letters.reduce((left, letter) => {
-                this.ctx.fillText(letter, left, text.bounds.top + baseline);
-
-                return left + this.ctx.measureText(letter).width;
-            }, text.bounds.left);
+            const chars = toCodePoints(text.text).map(i => fromCodePoint(i));
+            const pos = layout(chars, text.bounds.width, (s, len) =>
+                this.ctx.measureText(s).width + letterSpacing * (len - 1));
+            const dx = text.bounds.left;
+            const dy = text.bounds.top + lineHeight / 2;
+            for (let i = 0; i < pos.length; i++) {
+                if (pos[i][0] >= 0) {
+                    this.ctx.fillText(chars[i], pos[i][0] + dx, pos[i][1] * lineHeight + dy);
+                }
+            }
         }
     }
 
@@ -189,7 +194,7 @@ export class CanvasRenderer {
                 switch (paintOrderLayer) {
                     case PAINT_ORDER_LAYER.FILL:
                         this.ctx.fillStyle = asString(styles.color);
-                        this.renderTextWithLetterSpacing(text, styles.letterSpacing, text.bounds.height);
+                        this.renderTextWithLetterSpacing(text, styles.letterSpacing);
                         const textShadows: TextShadow = styles.textShadow;
 
                         if (textShadows.length && text.text.trim().length) {
@@ -202,7 +207,7 @@ export class CanvasRenderer {
                                     this.ctx.shadowOffsetY = textShadow.offsetY.number * this.options.scale;
                                     this.ctx.shadowBlur = textShadow.blur.number;
 
-                                    this.renderTextWithLetterSpacing(text, styles.letterSpacing, text.bounds.height);
+                                    this.renderTextWithLetterSpacing(text, styles.letterSpacing);
                                 });
 
                             this.ctx.shadowColor = '';
@@ -389,13 +394,10 @@ export class CanvasRenderer {
         }
 
         if (isTextInputElement(container) && container.value.length) {
-            const [fontFamily, fontSize] = this.createFontStyle(styles);
-            const {baseline} = this.fontMetrics.getMetrics(fontFamily, fontSize);
-
-            this.ctx.font = fontFamily;
+            this.ctx.font = this.createFontStyle(styles)[0];
             this.ctx.fillStyle = asString(styles.color);
 
-            this.ctx.textBaseline = 'alphabetic';
+            this.ctx.textBaseline = 'middle';
             this.ctx.textAlign = canvasTextAlign(container.styles.textAlign);
 
             const bounds = contentBox(container);
@@ -422,13 +424,10 @@ export class CanvasRenderer {
             ]);
 
             this.ctx.clip();
-            this.renderTextWithLetterSpacing(
-                new TextBounds(container.value, textBounds),
-                styles.letterSpacing,
-                baseline + 1
-            );
+            const lineHeight = (container instanceof TextareaElementContainer) ? computeLineHeight(styles.lineHeight, styles.fontSize.number) : undefined;
+            this.renderTextWithLetterSpacing(new TextBounds(container.value, textBounds), styles.letterSpacing, lineHeight);
             this.ctx.restore();
-            this.ctx.textBaseline = 'alphabetic';
+            this.ctx.textBaseline = 'bottom';
             this.ctx.textAlign = 'left';
         }
 
